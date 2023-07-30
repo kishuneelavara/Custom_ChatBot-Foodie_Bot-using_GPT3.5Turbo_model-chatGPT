@@ -2,7 +2,7 @@
 
 Use python 3.9
 
-# steps to run code
+### steps to run code
 
 1 Clone the repository
 
@@ -14,4 +14,4 @@ Use python 3.9
 3 Then redirect to the main repository and run `app.py` file
 
 
-### Demo on ChatBot - 
+### Demo on ChatBot - https://youtu.be/9RPQchy57oU
