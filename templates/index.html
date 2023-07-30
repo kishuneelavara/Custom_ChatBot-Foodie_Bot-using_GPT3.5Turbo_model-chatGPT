@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodie ChatBot</title>
+  <style>
+    /* Add the CSS styles here */
+    .chatbox {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 5px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+
+    .message.user {
+      background-color: #cce5ff;
+    }
+
+    .message.bot {
+      background-color: #d4edda;
+    }
+
+    .input-area {
+      display: flex;
+      align-items: center;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 5px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-left: 5px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+  <!-- MDB -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.1/mdb.min.css" rel="stylesheet">
+</head>
+<body onload="hideLoadingDiv()">
+  <div class="p-4">
+    <h3 class="text-center text-white mb-4 my-2 p-4 bg-primary card">FoodieBot: A Chatbot for Food Information.</h3>
+    <div class="text-center hidden" id="LOADING">
+      <i class="fas fa-spinner fa-spin fa-2x"></i>
+    </div>
+    {% if status=='success' %}
+            <div class="text-center" id="LOADING1" >
+                <br>
+                <button style="width:100%" type="submit" class="mx-auto btn btn-success text-nowrap"> {{ statement }}</button>
+
+            </div>
+         <br>
+         {% elif status=='failed' %}
+            <div class="text-center" id="LOADING2" >
+                <br>
+                <button style="width:100%" type="submit" class="mx-auto btn btn-danger text-nowrap"> {{ statement }}</button>
+            </div>
+         <br>
+        {% endif %}
+    <div class="row">
+      <div class="col-12 col-md-3 col-lg-3 border rounded p-4" id="todo_list">
+        <form id="todo-form" action="/upload" method="post" enctype="multipart/form-data">
+          <br>
+          Upload Food Data <br>
+            (Only Accepts CSV files)
+          <input type="file" name="file" autocomplete="off" required><br><br>
+          <button type="submit" class="mx-auto btn btn-primary text-nowrap">Upload</button>
+        </form>
+      </div>
+      <div class="col-12 col-md-9 col-lg-9 border rounded p-4">
+        <div class="chatbox">
+          <div class="message-area" id="messageArea">
+            <p class="message bot">Chatbot: Hi! I'm a food bot. Ask me about food items or categories, and I'll provide you with information.</p>
+          </div>
+          <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <!-- MDB -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.10.1/mdb.min.js"></script>
+  <script>
+    function hideLoadingDiv() {
+      setTimeout(function () {
+        document.getElementById('LOADING').classList.add('hidden');
+      }, 3000);
+    }
+    window.history.forward();
+        function noBack() {
+            window.history.forward();
+        }
+        window.onload = function() {
+            setTimeout(function(){
+            document.getElementById('LOADING1').classList.add('hidden');
+          },5000)
+          setTimeout(function(){
+            document.getElementById('LOADING2').classList.add('hidden');
+          },5000)
+
+            if (window.history && window.history.pushState) {
+                window.history.pushState('', null, '');
+                window.addEventListener('popstate', function() {
+                    window.history.pushState('', null, '');
+                });
+            }
+        }
+
+    // Rest of the JavaScript functions...
+  </script>
+    <script>
+  function appendMessage(role, content) {
+    const messageArea = document.getElementById("messageArea");
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", role);
+
+    // Convert new lines to <br> tags in the response
+    const formattedContent = content.replace(/\n/g, "<br>");
+
+    messageDiv.innerHTML = `<p>${formattedContent}</p>`;
+    messageArea.appendChild(messageDiv);
+
+    // Scroll to the bottom to show the latest message
+    messageArea.scrollTop = messageArea.scrollHeight;
+  }
+
+  function sendMessage() {
+    const userInput = document.getElementById("userInput").value;
+    appendMessage("user", `You: ${userInput}`);
+    document.getElementById("userInput").value = "";
+
+    // Show loading icon while waiting for the response
+    document.getElementById('LOADING').classList.remove('hidden');
+
+    // Fetch the chat response and display it
+    fetch("/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ user_input: userInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Format the response and handle new lines
+      const formattedReply = data.reply.replace(/\n/g, "<br>");
+      appendMessage("bot", `Chatbot: ${formattedReply}`);
+      hideLoadingDiv(); // Hide the loading icon once the response is received
+    })
+    .catch(error => console.error("Error:", error));
+  }
+</script>
+
+</body>
+</html>
